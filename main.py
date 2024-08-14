@@ -1,5 +1,70 @@
-import sys
+import gradio as gr
 
-from init import evosdxl_path
+from argparse import ArgumentParser, Namespace
 
-sys.path.append(evosdxl_path)
+from accelerate import Accelerator
+
+from evosdxl.evosdxl_jp_v1 import load_evosdxl_jp
+
+
+def parse_arguments() -> Namespace:
+    parser = ArgumentParser()
+    parser.add_argument("--public", action="store_true")
+    parser.add_argument("--port", "-p", type=int)
+    parser.add_argument("--id", type=str, default="10antz")
+    parser.add_argument("--password", type=str, default="12345")
+    parser.add_argument("--load_pipe_at_init", action="store_true")
+    return parser.parse_args()
+
+
+def load_model():
+    device = Accelerator().device
+    device = device if "mps" not in device.__str__() else "cpu" # mps device seems not supported
+    print(f"Device: {device}")
+    return load_evosdxl_jp(device)
+
+
+if __name__ == "__main__":
+    args = parse_arguments()
+    
+    # load model
+    pipe = load_model() if args.load_pipe_at_init else None
+    
+    # app structure
+    with gr.Blocks() as app:
+        with gr.Row():
+            with gr.Column():
+                prompt = gr.TextArea(label="プロンプト", placeholder="例：兎は蛙と戦争している")
+                negative_prompt = gr.TextArea(label="ネガティブ・プロンプト", placeholder="例：猿がいる\n（→猿に居ないでほしい）")
+                inference_steps = gr.Slider(1, 200, step=1, value=50, label="生成によるステップ数")
+                batch_size = gr.Slider(1, 4, step=1, value=1, label="画像の枚数/生成")
+            with gr.Column():
+                generated_images = gr.Gallery()
+        with gr.Row():
+            generate_button = gr.Button("生成する", variant="primary")
+        
+        def generate(prompt: str, negative_prompt: str, inference_steps: int, batch_size: int) -> list:
+            global pipe
+            if pipe is None:
+                pipe = load_model()
+            return pipe(
+                prompt=prompt, 
+                negative_prompt=negative_prompt,
+                height=1024,
+                width=1024,
+                num_inference_steps=inference_steps,
+                num_images_per_prompt=batch_size,
+            ).images
+        
+        generate_button.click(
+            generate,
+            inputs=[prompt, negative_prompt, inference_steps, batch_size],
+            outputs=[generated_images],
+        )
+    
+    # launch app        
+    app.launch(
+        share=args.public,
+        auth=(args.id, args.password),
+        server_port=args.port,
+    )
