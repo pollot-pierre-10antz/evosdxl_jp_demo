@@ -43,10 +43,10 @@ if __name__ == "__main__":
         with gr.Row():
             with gr.Column():
                 prompt = gr.TextArea(label="プロンプト", placeholder="例：兎は蛙と戦争している")
-                negative_prompt = gr.TextArea(label="ネガティブ・プロンプト", placeholder="例：猿がいる\n（→猿に居ないでほしい）")
-                inference_steps = gr.Slider(1, 200, step=1, value=50, label="生成によるステップ数")
+                negative_prompt = gr.TextArea(label="ネガティブ・プロンプト（任意）", placeholder="例：猿がいる\n（→猿に居ないでほしい）")
+                inference_steps = gr.Slider(1, 200, step=1, value=20, label="生成によるステップ数")
                 batch_size = gr.Slider(1, 4, step=1, value=1, label="画像の枚数/生成")
-                seed = gr.Number(value=-1, minimum=-1, precision=0)
+                seed = gr.Number(value=-1, minimum=-1, precision=0, label="シード")
             with gr.Column():
                 generated_images = gr.Gallery()
         with gr.Row():
