@@ -14,7 +14,7 @@ def parse_arguments() -> Namespace:
     parser.add_argument("--id", type=str, default="10antz")
     parser.add_argument("--password", type=str, default="12345")
     parser.add_argument("--unload_model_interval", type=int, default=15, help="in minutes.")
-    parser.add_argument("model_path_or_url", type=str, default="stabilityai/japanese-stable-diffusion-xl")
+    parser.add_argument("--model_path_or_url", type=str, default="stabilityai/japanese-stable-diffusion-xl")
     return parser.parse_args()
 
 
