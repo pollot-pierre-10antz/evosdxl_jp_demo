@@ -30,7 +30,7 @@ if __name__ == "__main__":
     # load model
     device, idle_device = get_devices()
     print(f"Active device: {device} | Idle device: {idle_device}")
-    pipe = load_evosdxl_jp(device)
+    pipe = load_evosdxl_jp(device.__str__())
     t0 = time.monotonic()
     
     # app structure
