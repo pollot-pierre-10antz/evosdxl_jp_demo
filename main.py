@@ -72,7 +72,7 @@ if __name__ == "__main__":
         
         generate_button.click(
             generate,
-            inputs=[prompt, negative_prompt, inference_steps, batch_size],
+            inputs=[prompt, negative_prompt, inference_steps, batch_size, seed],
             outputs=[generated_images],
         )
         
