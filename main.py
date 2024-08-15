@@ -30,7 +30,7 @@ if __name__ == "__main__":
     # load model
     device, idle_device = get_devices()
     print(f"Active device: {device} | Idle device: {idle_device}")
-    pipe = DiffusionPipeline.from_pretrained("stabilityai/japanese-stable-diffusion-xl", variant="fp16", trust_remote_code=True)
+    pipe = DiffusionPipeline.from_pretrained("stabilityai/japanese-stable-diffusion-xl", variant="fp16")
     t0 = time.monotonic()
     
     # app structure
