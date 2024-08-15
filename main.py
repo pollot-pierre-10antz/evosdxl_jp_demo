@@ -14,7 +14,7 @@ def parse_arguments() -> Namespace:
     parser.add_argument("--id", type=str, default="10antz")
     parser.add_argument("--password", type=str, default="12345")
     parser.add_argument("--unload_model_interval", type=int, default=15, help="in minutes.")
-    parser.add_argument("--model_path_or_url", type=str, default="stabilityai/japanese-stable-diffusion-xl")
+    parser.add_argument("--no_fp16", action="store_false")
     return parser.parse_args()
 
 
@@ -31,7 +31,8 @@ if __name__ == "__main__":
     # load model
     device, idle_device = get_devices()
     print(f"Active device: {device} | Idle device: {idle_device}")
-    pipe = DiffusionPipeline.from_pretrained(args.model_path_or_url, trust_remote_code=True)
+    variant = None if args.no_fp16 else "fp16"
+    pipe = DiffusionPipeline.from_pretrained("stabilityai/japanese-stable-diffusion-xl", variant=variant, trust_remote_code=True)
     t0 = time.monotonic()
     
     # app structure
