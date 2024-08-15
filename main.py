@@ -1,9 +1,9 @@
 import gradio as gr
+import time
+import torch
 
 from argparse import ArgumentParser, Namespace
-
 from accelerate import Accelerator
-
 from evosdxl.evosdxl_jp_v1 import load_evosdxl_jp
 
 
@@ -13,22 +13,25 @@ def parse_arguments() -> Namespace:
     parser.add_argument("--port", "-p", type=int)
     parser.add_argument("--id", type=str, default="10antz")
     parser.add_argument("--password", type=str, default="12345")
-    parser.add_argument("--load_pipe_at_init", action="store_true")
+    parser.add_argument("--unload_model_interval", type=int, default=15, help="in minutes.")
     return parser.parse_args()
 
 
-def load_model():
+def get_devices(): 
+    idle_device = torch.device("cpu")
     device = Accelerator().device
-    device = device if "mps" not in device.__str__() else "cpu" # mps device seems not supported
-    print(f"Device: {device}")
-    return load_evosdxl_jp(device)
+    device = device if "mps" not in device.__str__() else idle_device # mps device seems not supported
+    return device, idle_device
 
 
 if __name__ == "__main__":
     args = parse_arguments()
     
     # load model
-    pipe = load_model() if args.load_pipe_at_init else None
+    device, idle_device = get_devices()
+    print(f"Active device: {device} | Idle device: {idle_device}")
+    pipe = load_evosdxl_jp(device)
+    t0 = time.monotonic()
     
     # app structure
     with gr.Blocks() as app:
@@ -44,9 +47,11 @@ if __name__ == "__main__":
             generate_button = gr.Button("生成する", variant="primary")
         
         def generate(prompt: str, negative_prompt: str, inference_steps: int, batch_size: int) -> list:
-            global pipe
-            if pipe is None:
-                pipe = load_model()
+            global pipe, t0
+            if pipe.device == idle_device:
+                print("Move pipe to active device.")
+                pipe.to(device)
+            t0 = time.monotonic()
             return pipe(
                 prompt=prompt, 
                 negative_prompt=negative_prompt,
@@ -60,6 +65,23 @@ if __name__ == "__main__":
             generate,
             inputs=[prompt, negative_prompt, inference_steps, batch_size],
             outputs=[generated_images],
+        )
+        
+        def load_unload_manager():
+            global pipe, t0
+            if pipe.device == idle_device:
+                return
+            t1 = time.monotonic()
+            if t1 - t0 >= args.unload_model_interval:
+                pipe.to(idle_device)
+                print(f"Pipe temporarily stored to {idle_device}")
+                t0 = time.monotonic()
+        
+        timer = gr.Textbox(
+            value=load_unload_manager, 
+            every=args.unload_model_interval * 60, 
+            visible=False, 
+            interactive=False
         )
     
     # launch app        
