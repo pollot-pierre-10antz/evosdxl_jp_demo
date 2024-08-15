@@ -30,7 +30,12 @@ if __name__ == "__main__":
     # load model
     device, idle_device = get_devices()
     print(f"Active device: {device} | Idle device: {idle_device}")
-    pipe = DiffusionPipeline.from_pretrained("stabilityai/japanese-stable-diffusion-xl", variant="fp16", trust_remote_code=True)
+    pipe = DiffusionPipeline.from_pretrained(
+        "stabilityai/japanese-stable-diffusion-xl", 
+        variant="fp16", 
+        torch_dtype=torch.float16,
+        trust_remote_code=True,
+    )
     t0 = time.monotonic()
     
     # app structure
@@ -41,17 +46,21 @@ if __name__ == "__main__":
                 negative_prompt = gr.TextArea(label="ネガティブ・プロンプト", placeholder="例：猿がいる\n（→猿に居ないでほしい）")
                 inference_steps = gr.Slider(1, 200, step=1, value=50, label="生成によるステップ数")
                 batch_size = gr.Slider(1, 4, step=1, value=1, label="画像の枚数/生成")
+                seed = gr.Number(value=-1, minimum=-1, precision=0)
             with gr.Column():
                 generated_images = gr.Gallery()
         with gr.Row():
             generate_button = gr.Button("生成する", variant="primary")
         
-        def generate(prompt: str, negative_prompt: str, inference_steps: int, batch_size: int) -> list:
+        def generate(prompt: str, negative_prompt: str, inference_steps: int, batch_size: int, seed: int) -> list:
             global pipe, t0
             if pipe.device == idle_device:
                 print("Move pipe to active device.")
                 pipe.to(device)
             t0 = time.monotonic()
+            if seed < 0:
+                seed = torch.randint(0, 10000).item()
+            torch.manual_seed(seed)
             return pipe(
                 prompt=prompt, 
                 negative_prompt=negative_prompt,
