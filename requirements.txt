@@ -1,1 +1,5 @@
+diffusers==0.26.0
+sentencepiece
+transformers
+accelerate
 gradio

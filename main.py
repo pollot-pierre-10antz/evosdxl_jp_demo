@@ -4,7 +4,7 @@ import torch
 
 from argparse import ArgumentParser, Namespace
 from accelerate import Accelerator
-from evosdxl.evosdxl_jp_v1 import load_evosdxl_jp
+from diffusers import DiffusionPipeline
 
 
 def parse_arguments() -> Namespace:
@@ -14,6 +14,7 @@ def parse_arguments() -> Namespace:
     parser.add_argument("--id", type=str, default="10antz")
     parser.add_argument("--password", type=str, default="12345")
     parser.add_argument("--unload_model_interval", type=int, default=15, help="in minutes.")
+    parser.add_argument("model_path_or_url", type=str, default="stabilityai/japanese-stable-diffusion-xl")
     return parser.parse_args()
 
 
@@ -30,7 +31,7 @@ if __name__ == "__main__":
     # load model
     device, idle_device = get_devices()
     print(f"Active device: {device} | Idle device: {idle_device}")
-    pipe = load_evosdxl_jp(device.__str__())
+    pipe = DiffusionPipeline.from_pretrained(args.model_path_or_url, trust_remote_code=True)
     t0 = time.monotonic()
     
     # app structure
