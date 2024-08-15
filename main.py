@@ -59,7 +59,7 @@ if __name__ == "__main__":
                 pipe.to(device)
             t0 = time.monotonic()
             if seed < 0:
-                seed = torch.randint(0, 10000).item()
+                seed = time.monotonic()
             torch.manual_seed(seed)
             return pipe(
                 prompt=prompt, 
